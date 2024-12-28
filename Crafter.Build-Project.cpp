@@ -101,19 +101,19 @@ void Project::Build(std::string configuration) {
             for(std::int_fast32_t i = 0; i < config.moduleFiles.size(); i++) {
                 files+=std::format("{}/{}.o ",config.buildDir, config.moduleFiles[i]);
                 threads[i] = std::thread([i, config](){
-                    system(std::format("clang++ -std={} {}/{}.pcm -fprebuilt-module-path={} -c -o {}/{}.o", config.standard, config.buildDir, config.moduleFiles[i], config.buildDir, config.buildDir, config.moduleFiles[i]).c_str());
+                    system(std::format("clang++ -std={} {}/{}.pcm -fprebuilt-module-path={} -c -O{} -o {}/{}.o", config.standard, config.buildDir, config.moduleFiles[i], config.buildDir, config.optimizationLevel, config.buildDir, config.moduleFiles[i]).c_str());
                 });
             }
             for(std::int_fast32_t i = 0; i < config.sourceFiles.size(); i++) {
                 files+=std::format("{}/{}_source.o ",config.buildDir, config.sourceFiles[i]);
                 threads[config.moduleFiles.size()+i] = std::thread([i, config](){
-                    system(std::format("clang++ -std={} {}.cpp -fprebuilt-module-path={} -c -o {}/{}_source.o", config.standard, config.sourceFiles[i], config.buildDir, config.buildDir, config.sourceFiles[i]).c_str());
+                    system(std::format("clang++ -std={} {}.cpp -fprebuilt-module-path={} -c -O{} -o {}/{}_source.o", config.standard, config.sourceFiles[i], config.buildDir, config.optimizationLevel, config.buildDir, config.sourceFiles[i]).c_str());
                 });
             }
             for(std::thread& thread : threads){
                 thread.join();
             }
-            system(std::format("clang++ {}-o {}/{}", files, config.outputDir, name).c_str());
+            system(std::format("clang++ {}-O{} -o {}/{}", files, config.optimizationLevel, config.outputDir, name).c_str());
             return;
         }
     }

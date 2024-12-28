@@ -13,6 +13,11 @@
             "name": "debug",
             "extends": ["base"],
             "optimization_level": "0"
+        },
+        {
+            "name": "release",
+            "extends": ["base"],
+            "optimization_level": "3"
         }
     ]
 }
