@@ -10,13 +10,33 @@
             "output_dir": "./bin"
         },
         {
-            "name": "debug",
+            "name": "executable",
             "extends": ["base"],
+            "type":"executable"
+        },
+        {
+            "name": "lib",
+            "extends": ["base"],
+            "type":"lib"
+        },
+        {
+            "name": "debug",
+            "extends": ["executable"],
             "optimization_level": "0"
         },
         {
             "name": "release",
-            "extends": ["base"],
+            "extends": ["executable"],
+            "optimization_level": "3"
+        },
+        {
+            "name": "debug-lib",
+            "extends": ["lib"],
+            "optimization_level": "0"
+        },
+        {
+            "name": "release-lib",
+            "extends": ["lib"],
             "optimization_level": "3"
         }
     ]

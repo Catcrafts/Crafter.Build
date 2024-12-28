@@ -55,22 +55,15 @@ int main() {
   std::println("Hello World!");
 }
 ```
-Save and close, then run ``crafter-build debug``. Now you can run the ``hello-world`` executable that has appeared in the ``build`` folder
+Save and close, then run ``crafter-build debug``. Now you can run the ``hello-world`` executable that has appeared in the ``bin`` folder
 
 ## CLI arguments
-```bash
-crafter-build <configuration>
-```
-builds the project with the specified configuration, using the defualt project filename ``project.json``
 
-```bash
-crafter-build <configuration> <filename> 
-```
-builds the project with the specified configuration, using the specified project filename
+``--help`` Displays this help message.
 
-```bash
-crafter-build --help
-```
-displays this help message
+``-c`` The name of the configuration to build.
 
+``-p`` The name of the project file.
+
+``-o`` Overrides the output folder.
 

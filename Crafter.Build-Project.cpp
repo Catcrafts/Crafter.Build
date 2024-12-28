@@ -79,45 +79,64 @@ ConfigData CollapseConfig(nlohmann::json& configs,nlohmann::json& config) {
 void Project::Build(std::string configuration) {
     for(const Configuration& config : configurations) {
         if(config.name == configuration){
-            if (!std::filesystem::exists(config.buildDir)) {
-                std::filesystem::create_directory(config.buildDir);
-            } else {
-                for (const auto& entry : std::filesystem::directory_iterator(config.buildDir)){
-                    std::filesystem::remove_all(entry.path());
-                }
-            }
-            if (!std::filesystem::exists(config.outputDir)) {
-                std::filesystem::create_directory(config.outputDir);
-            } else {
-                for (const auto& entry : std::filesystem::directory_iterator(config.outputDir)){
-                    std::filesystem::remove_all(entry.path());
-                }
-            }
-            for(const std::string& moduleFile : config.moduleFiles){
-                system(std::format("clang++ -std={} {}.cppm --precompile -fprebuilt-module-path={} -o {}/{}.pcm", config.standard, moduleFile, config.buildDir, config.buildDir, moduleFile).c_str());
-            }
-            std::vector<std::thread> threads = std::vector<std::thread>(config.moduleFiles.size() + config.sourceFiles.size());
-            std::string files;
-            for(std::int_fast32_t i = 0; i < config.moduleFiles.size(); i++) {
-                files+=std::format("{}/{}.o ",config.buildDir, config.moduleFiles[i]);
-                threads[i] = std::thread([i, config](){
-                    system(std::format("clang++ -std={} {}/{}.pcm -fprebuilt-module-path={} -c -O{} -o {}/{}.o", config.standard, config.buildDir, config.moduleFiles[i], config.buildDir, config.optimizationLevel, config.buildDir, config.moduleFiles[i]).c_str());
-                });
-            }
-            for(std::int_fast32_t i = 0; i < config.sourceFiles.size(); i++) {
-                files+=std::format("{}/{}_source.o ",config.buildDir, config.sourceFiles[i]);
-                threads[config.moduleFiles.size()+i] = std::thread([i, config](){
-                    system(std::format("clang++ -std={} {}.cpp -fprebuilt-module-path={} -c -O{} -o {}/{}_source.o", config.standard, config.sourceFiles[i], config.buildDir, config.optimizationLevel, config.buildDir, config.sourceFiles[i]).c_str());
-                });
-            }
-            for(std::thread& thread : threads){
-                thread.join();
-            }
-            system(std::format("clang++ {}-O{} -o {}/{}", files, config.optimizationLevel, config.outputDir, name).c_str());
+            Build(config, config.outputDir);
             return;
         }
     }
     throw std::runtime_error("Configuration: " + configuration + " not found.");
+}
+
+void Project::Build(std::string configuration, std::string outputDir) {
+    for(const Configuration& config : configurations) {
+        if(config.name == configuration){
+            Build(config, outputDir);
+            return;
+        }
+    }
+    throw std::runtime_error("Configuration: " + configuration + " not found.");
+}
+
+void Project::Build(Configuration configuration) {
+    Build(configuration, configuration.outputDir);
+}
+
+void Project::Build(Configuration config, std::string outputDir) {
+    if (!std::filesystem::exists(config.buildDir)) {
+        std::filesystem::create_directory(config.buildDir);
+    } else {
+        for (const auto& entry : std::filesystem::directory_iterator(config.buildDir)){
+            std::filesystem::remove_all(entry.path());
+        }
+    }
+    if (!std::filesystem::exists(outputDir)) {
+        std::filesystem::create_directory(outputDir);
+    } else {
+        for (const auto& entry : std::filesystem::directory_iterator(outputDir)){
+            std::filesystem::remove_all(entry.path());
+        }
+    }
+    for(const std::string& moduleFile : config.moduleFiles){
+        system(std::format("clang++ -std={} {}.cppm --precompile -fprebuilt-module-path={} -o {}/{}.pcm", config.standard, moduleFile, config.buildDir, config.buildDir, moduleFile).c_str());
+    }
+    std::vector<std::thread> threads = std::vector<std::thread>(config.moduleFiles.size() + config.sourceFiles.size());
+    std::string files;
+    for(std::int_fast32_t i = 0; i < config.moduleFiles.size(); i++) {
+        files+=std::format("{}/{}.o ",config.buildDir, config.moduleFiles[i]);
+        threads[i] = std::thread([i, config](){
+            system(std::format("clang++ -std={} {}/{}.pcm -fprebuilt-module-path={} -c -O{} -o {}/{}.o", config.standard, config.buildDir, config.moduleFiles[i], config.buildDir, config.optimizationLevel, config.buildDir, config.moduleFiles[i]).c_str());
+        });
+    }
+    for(std::int_fast32_t i = 0; i < config.sourceFiles.size(); i++) {
+        files+=std::format("{}/{}_source.o ",config.buildDir, config.sourceFiles[i]);
+        threads[config.moduleFiles.size()+i] = std::thread([i, config](){
+        system(std::format("clang++ -std={} {}.cpp -fprebuilt-module-path={} -c -O{} -o {}/{}_source.o", config.standard, config.sourceFiles[i], config.buildDir, config.optimizationLevel, config.buildDir, config.sourceFiles[i]).c_str());
+        });
+    }
+    for(std::thread& thread : threads){
+        thread.join();
+    }
+    system(std::format("clang++ {}-O{} -o {}/{}", files, config.optimizationLevel, outputDir, name).c_str());
+
 }
 
 Project Project::LoadFromJSON(std::string file) {
