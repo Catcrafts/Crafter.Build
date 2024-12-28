@@ -114,12 +114,16 @@ void Project::Build(std::string configuration) {
                 thread.join();
             }
             system(std::format("clang++ {}-o {}/{}", files, config.outputDir, name).c_str());
-            break;
+            return;
         }
     }
+    throw std::runtime_error("Configuration: " + configuration + " not found.");
 }
 
 Project Project::LoadFromJSON(std::string file) {
+     if (!std::filesystem::exists(file)) {
+         throw std::runtime_error("Project file: " + file + " not found.");
+     }
     std::ifstream f(file);
     nlohmann::json data = nlohmann::json::parse(f);
     const std::string name = data["name"].get<std::string>();
