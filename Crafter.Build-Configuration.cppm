@@ -34,6 +34,8 @@ export namespace Crafter::Build {
         std::string optimizationLevel;
         std::string buildDir;
         std::string outputDir;
-        Configuration(std::string name, std::string standard, std::vector<std::string> sourceFiles, std::vector<std::string> moduleFiles, std::string optimizationLevel, std::string buildDir, std::string outputDir);
+        std::string type;
+        std::string target;
+        Configuration(std::string name, std::string standard, std::vector<std::string> sourceFiles, std::vector<std::string> moduleFiles, std::string optimizationLevel, std::string buildDir, std::string outputDir, std::string type, std::string target);
     };
 }

@@ -42,12 +42,20 @@ struct ConfigData {
     std::string optimizationLevel;
     std::string buildDir;
     std::string outputDir;
+    std::string type;
+    std::string target;
 };
 
 ConfigData CollapseConfig(nlohmann::json& configs,nlohmann::json& config) {
     ConfigData data;
     if(config.contains("standard")) {
         data.standard = config["standard"].get<std::string>();
+    }
+    if(config.contains("target")) {
+        data.target = config["target"].get<std::string>();
+    }
+    if(config.contains("type")) {
+        data.type = config["type"].get<std::string>();
     }
     if(config.contains("source_files")) {
         data.sourceFiles = config["source_files"].get<std::vector<std::string>>();
@@ -87,6 +95,12 @@ ConfigData CollapseConfig(nlohmann::json& configs,nlohmann::json& config) {
                    }
                    if(!extendData.outputDir.empty() && data.outputDir.empty()) {
                        data.outputDir = extendData.outputDir;
+                   }
+                   if(!extendData.target.empty() && data.target.empty()) {
+                       data.target = extendData.target;
+                   }
+                   if(!extendData.type.empty() && data.type.empty()) {
+                       data.type = extendData.type;
                    }
                    break;
                }
@@ -135,27 +149,45 @@ void Project::Build(Configuration config, std::string outputDir) {
             std::filesystem::remove_all(entry.path());
         }
     }
+
+    std::string target;
+    if(!config.target.empty()){
+        target = std::format("-target {}", config.target);
+    }
+    std::string pcmDir;
+    if(config.type == "library" || config.type == "shared-library"){
+        pcmDir = outputDir;
+    }else{
+        pcmDir = config.buildDir;
+    }
+
     for(const std::string& moduleFile : config.moduleFiles){
-        system(std::format("clang++ -std={} {}.cppm --precompile -fprebuilt-module-path={} -o {}/{}.pcm", config.standard, moduleFile, config.buildDir, config.buildDir, moduleFile).c_str());
+        system(std::format("clang++ -std={} {}.cppm --precompile -fprebuilt-module-path={} -o {}/{}.pcm", config.standard, moduleFile, pcmDir, pcmDir, moduleFile).c_str());
     }
     std::vector<std::thread> threads = std::vector<std::thread>(config.moduleFiles.size() + config.sourceFiles.size());
     std::string files;
     for(std::int_fast32_t i = 0; i < config.moduleFiles.size(); i++) {
         files+=std::format("{}/{}.o ",config.buildDir, config.moduleFiles[i]);
-        threads[i] = std::thread([i, config](){
-            system(std::format("clang++ -std={} {}/{}.pcm -fprebuilt-module-path={} -c -O{} -o {}/{}.o", config.standard, config.buildDir, config.moduleFiles[i], config.buildDir, config.optimizationLevel, config.buildDir, config.moduleFiles[i]).c_str());
+        threads[i] = std::thread([i, config, pcmDir, target](){
+            system(std::format("clang++ -std={} {}/{}.pcm -fprebuilt-module-path={} -c -O{} -o {}/{}.o {}", config.standard, pcmDir, config.moduleFiles[i], pcmDir, config.optimizationLevel, config.buildDir, config.moduleFiles[i], target).c_str());
         });
     }
     for(std::int_fast32_t i = 0; i < config.sourceFiles.size(); i++) {
         files+=std::format("{}/{}_source.o ",config.buildDir, config.sourceFiles[i]);
-        threads[config.moduleFiles.size()+i] = std::thread([i, config](){
-        system(std::format("clang++ -std={} {}.cpp -fprebuilt-module-path={} -c -O{} -o {}/{}_source.o", config.standard, config.sourceFiles[i], config.buildDir, config.optimizationLevel, config.buildDir, config.sourceFiles[i]).c_str());
+        threads[config.moduleFiles.size()+i] = std::thread([i, config, pcmDir, target](){
+        system(std::format("clang++ -std={} {}.cpp -fprebuilt-module-path={} -c -O{} -o {}/{}_source.o {}", config.standard, config.sourceFiles[i], pcmDir, config.optimizationLevel, config.buildDir, config.sourceFiles[i], target).c_str());
         });
     }
     for(std::thread& thread : threads){
         thread.join();
     }
-    system(std::format("clang++ {}-O{} -o {}/{}", files, config.optimizationLevel, outputDir, name).c_str());
+    if(config.type == "executable"){
+         system(std::format("clang++ {}-O{} -o {}/{} {}", files, config.optimizationLevel, outputDir, name, target).c_str());
+    } else if(config.type == "library"){
+         system(std::format("ar r {}/{}.a {}", outputDir, name, files, target).c_str());
+    } else if(config.type == "shared-library"){
+        system(std::format("ar r {}/{}.so {} -shared", outputDir, name, files, target).c_str());
+    }
 
 }
 
@@ -170,7 +202,7 @@ Project Project::LoadFromJSON(std::string file) {
     nlohmann::json configs = data["configurations"];
     for (nlohmann::json::iterator it = configs.begin(); it != configs.end(); ++it) {
         ConfigData configData = CollapseConfig(configs, (*it));
-        configurations.emplace_back((*it)["name"].get<std::string>(), configData.standard, configData.sourceFiles, configData.moduleFiles, configData.optimizationLevel, configData.buildDir, configData.outputDir);
+        configurations.emplace_back((*it)["name"].get<std::string>(), configData.standard, configData.sourceFiles, configData.moduleFiles, configData.optimizationLevel, configData.buildDir, configData.outputDir,configData.type, configData.target);
     }
     return Project(name,configurations);
 }

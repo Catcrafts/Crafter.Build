@@ -55,7 +55,7 @@ int main() {
   std::println("Hello World!");
 }
 ```
-Save and close, then run ``crafter-build debug``. Now you can run the ``hello-world`` executable that has appeared in the ``bin`` folder
+Save and close, then run ``crafter-build -c debug``. Now you can run the ``hello-world`` executable that has appeared in the ``bin`` folder
 
 ## CLI arguments
 
