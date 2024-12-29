@@ -93,7 +93,7 @@ Save and close, then run ``crafter-build -c debug``. Now you can run the ``hello
     }
 ]
 ```
-This will now link the library of Crafter.Build in whatever project you use this in.
+This will now link the library of Crafter.Build in the configuration you use this in.
 
 ``target`` Clang triplet this configuration uses, please refer to the [relevant clang documentation](https://clang.llvm.org/docs/CrossCompilation.html#target-triple).
 
