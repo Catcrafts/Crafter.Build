@@ -84,6 +84,17 @@ Save and close, then run ``crafter-build -c debug``. Now you can run the ``hello
 
 ``optimization_level`` Please refer to the [relevant clang documentation](https://clang.llvm.org/docs/CommandGuide/clang.html#code-generation-options).
 
+``dependencies`` An object array of the dependencies of this project, example:
+```json
+"dependencies":[
+    {
+        "path":"/home/Crafter.Build/project.json",
+         "configuration":"debug-lib"
+    }
+]
+```
+This will now link the library of Crafter.Build in whatever project you use this in.
+
 ``target`` Clang triplet this configuration uses, please refer to the [relevant clang documentation](https://clang.llvm.org/docs/CrossCompilation.html#target-triple).
 
 Note: the WASI SDK needs to be installed to compile to webassmbly, and ``$WASI_SDK_PATH`` needs to be set, please refer to the [wasi-sdk installation guide](https://github.com/WebAssembly/wasi-sdk?tab=readme-ov-file#install).
