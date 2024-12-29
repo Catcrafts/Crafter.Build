@@ -1,6 +1,6 @@
 # About
 
-This is a simple and easy to use C++ build system for Linux, it uses JSON based project files.
+This is a simple and easy to use C++ build system for Linux designed for use with C++20 modules in mind, it uses JSON based project files.
 
 # Install
 
