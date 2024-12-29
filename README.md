@@ -86,7 +86,7 @@ Save and close, then run ``crafter-build -c debug``. Now you can run the ``hello
 
 ``target`` Clang triplet this configuration uses, please refer to the [relevant clang documentation](https://clang.llvm.org/docs/CrossCompilation.html#target-triple).
 
-Note: the WASI SDK needs to be installed to use the ``wasm32-unknown-wasi`` to compile to webassmbly, and ``$WASI_SDK_PATH`` needs to be set, please refer to the [wasi-sdk installation guide](https://github.com/WebAssembly/wasi-sdk?tab=readme-ov-file#install).
+Note: the WASI SDK needs to be installed to compile to webassmbly, and ``$WASI_SDK_PATH`` needs to be set, please refer to the [wasi-sdk installation guide](https://github.com/WebAssembly/wasi-sdk?tab=readme-ov-file#install).
 
 
 

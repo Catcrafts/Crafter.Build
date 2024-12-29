@@ -161,11 +161,16 @@ void Project::Build(Configuration config, std::string outputDir) {
         pcmDir = config.buildDir;
     }
     std::string clangDir;
-    if(config.target == "wasm32-unknown-wasi"){
+    if(config.target == "wasm32-unknown-wasi" || config.target == "wasm64-unknown-wasi"){
          clangDir = "${WASI_SDK_PATH}/bin/clang++ --sysroot=${WASI_SDK_PATH}/share/wasi-sysroot";
          name+=".wasm";
     } else{
          clangDir = "clang++";
+    }
+
+    if(config.target == "wasm32" || config.target == "wasm64") {
+        clangDir = "${WASI_SDK_PATH}/bin/clang++ --no-standard-libraries -Wl,--no-entry -Wl,--export-all -Wno-unused-command-line-argument";
+         name+=".wasm";
     }
 
     for(const std::string& moduleFile : config.moduleFiles){
