@@ -19,5 +19,6 @@ USA
 */
 
 export module Crafter.Build;
+export import :Dependency;
 export import :Project;
 export import :Configuration;

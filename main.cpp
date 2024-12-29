@@ -23,35 +23,46 @@ USA
 #include <fstream>
 #include <print>
 #include "json.hpp"
+#include <linux/limits.h>
+#include <unistd.h>
 import Crafter.Build;
 using namespace Crafter::Build;
+namespace fs = std::filesystem;
 int main(int argc, char* argv[]) {
     if(argc == 1) {
         std::println("No arguments provided, use --help for help");
     }
-    std::string filename = "project.json";
+    fs::path filepath = "project.json";
     std::string configuration;
     std::string outputDir;
     for (std::uint_fast32_t i = 1; i < argc; i++) {
         std::string arg = std::string(argv[i]);
         if(arg == "--help"){
-             std::println("--help\tDisplays this help message.\n-c The name of the configuration to build.\n-p\nThe name of the project file.\n-o Overrides the output folder.\n");
+             std::println("--help\tDisplays this help message.\n-c The name of the configuration to build.\n-p The path to the project file.\n-o Overrides the output folder.\n");
              return 0;
         } else if(arg == "-c"){
             configuration = argv[++i];
         } else if(arg == "-o"){
             outputDir = argv[++i];
         } else if(arg == "-p"){
-            filename = argv[++i];
+            filepath = fs::path(argv[++i]);
         } else{
             std::println("Unkown argument: {}", argv[i]);
             return 1;
         }
     }
-    Project project = Project::LoadFromJSON(filename);
+
+    fs::path projectPath;
+    if(filepath.is_relative()){
+        projectPath = fs::current_path()/filepath;
+    }else{
+        projectPath = filepath;
+    }
+
+    Project project = Project::LoadFromJSON(projectPath);
     if(outputDir.empty()){
         project.Build(configuration);
     } else{
-        project.Build(configuration, outputDir);
+        project.Build(configuration, fs::path(outputDir));
     }
 }

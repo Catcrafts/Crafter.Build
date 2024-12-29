@@ -4,15 +4,16 @@
         {
             "name": "base",
             "standard": "c++26",
-            "source_files": ["main", "Crafter.Build-Configuration", "Crafter.Build-Project"],
-            "module_files": ["Crafter.Build-Configuration", "Crafter.Build-Project", "Crafter.Build"],
+            "source_files": ["Crafter.Build-Configuration", "Crafter.Build-Project", "Crafter.Build-Dependency"],
+            "module_files": ["Crafter.Build-Dependency", "Crafter.Build-Configuration", "Crafter.Build-Project", "Crafter.Build"],
             "build_dir": "./build",
             "output_dir": "./bin"
         },
         {
             "name": "executable",
             "extends": ["base"],
-            "type":"executable"
+            "type":"executable",
+            "source_files": ["main"]
         },
         {
             "name": "lib",

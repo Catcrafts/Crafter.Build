@@ -22,20 +22,26 @@ module;
 #include <string>
 #include <cstdint>
 #include <vector>
+#include "json.hpp"
 export module Crafter.Build:Configuration;
+import :Dependency;
+
+namespace fs = std::filesystem;
 
 export namespace Crafter::Build {
     class Configuration {
     public:
         std::string name;
         std::string standard;
-        std::vector<std::string> sourceFiles;
-        std::vector<std::string> moduleFiles;
+        std::vector<fs::path> sourceFiles;
+        std::vector<fs::path> moduleFiles;
         std::string optimizationLevel;
         std::string buildDir;
         std::string outputDir;
         std::string type;
         std::string target;
-        Configuration(std::string name, std::string standard, std::vector<std::string> sourceFiles, std::vector<std::string> moduleFiles, std::string optimizationLevel, std::string buildDir, std::string outputDir, std::string type, std::string target);
+        std::vector<Dependency> dependencies;
+        Configuration(std::string name, std::string standard, std::vector<fs::path> sourceFiles, std::vector<fs::path> moduleFiles, std::string optimizationLevel, std::string buildDir, std::string outputDir, std::string type, std::string target, std::vector<Dependency> dependencies);
+        Configuration(nlohmann::json& configs, nlohmann::json& config, fs::path workingDir);
     };
 }

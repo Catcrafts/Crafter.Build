@@ -21,20 +21,23 @@ USA
 module;
 #include <vector>
 #include <string>
+#include <filesystem>
 export module Crafter.Build:Project;
 import :Configuration;
+namespace fs = std::filesystem;
 
 export namespace Crafter::Build {
     class Project {
     public:
         std::string name;
+        fs::path path;
         std::vector<Configuration> configurations;
-        Project(std::string name, std::vector<Configuration> configurations);
+        Project(std::string name, fs::path path, std::vector<Configuration> configurations);
         void Build(std::string configuration);
-        void Build(std::string configuration, std::string outputDir);
+        void Build(std::string configuration, fs::path outputDir);
         void Build(Configuration configuration);
-        void Build(Configuration configuration, std::string outputDir);
-        void SaveToJSON(std::string path);
-        static Project LoadFromJSON(std::string file);
+        void Build(Configuration configuration, fs::path outputDir);
+        void SaveToJSON(fs::path path);
+        static Project LoadFromJSON(fs::path path);
     };
 }
