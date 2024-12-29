@@ -24,6 +24,6 @@ module Crafter.Build:DependencyImpl;
 import :Dependency;
 using namespace Crafter::Build;
 
-Dependency::Dependency(std::string path, std::string configuration, std::string filename): path(path), configuration(configuration), filename(filename) {
+Dependency::Dependency(std::string path, std::string configuration): path(path), configuration(configuration) {
 
 }

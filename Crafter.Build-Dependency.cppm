@@ -26,8 +26,7 @@ export namespace Crafter::Build {
     class Dependency {
     public:
         std::string path;
-        std::string filename;
         std::string configuration;
-        Dependency(std::string path, std::string configuration, std::string filename);
+        Dependency(std::string path, std::string configuration);
     };
 }

@@ -81,7 +81,7 @@ Configuration::Configuration(nlohmann::json& configs, nlohmann::json& config, fs
     if(config.contains("dependencies")) {
         nlohmann::json dependenciesJson = config["dependencies"];
         for (nlohmann::json::iterator it = dependenciesJson.begin(); it != dependenciesJson.end(); ++it) {
-            dependencies.emplace_back((*it)["path"].get<std::string>(), (*it)["configuration"].get<std::string>(), (*it)["filename"].get<std::string>());
+            dependencies.emplace_back((*it)["path"].get<std::string>(), (*it)["configuration"].get<std::string>());
         }
     }
     if(config.contains("extends")){
