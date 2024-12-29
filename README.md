@@ -59,11 +59,34 @@ Save and close, then run ``crafter-build -c debug``. Now you can run the ``hello
 
 ## CLI arguments
 
-``--help`` Displays this help message.
+``--help`` Displays a help message.
 
 ``-c`` The name of the configuration to build.
 
 ``-p`` The name of the project file.
 
 ``-o`` Overrides the output folder.
+
+## configuration properties
+``name`` Name of the configuration.
+
+``standard`` C++ standard that this configuration uses, please refer to the [relevant clang documentation](https://clang.llvm.org/cxx_status.html)
+
+``source_files`` All source files of the project ``.cpp`` extension is assumed.
+
+``module_files`` All C++ 20 module files of the project ``.cppm`` extension is assumed.
+
+``build_dir`` The directory where intermediate files are stored.
+
+``output_dir`` The directory where the output files will be placed.
+
+``extends`` An array of configuration names that this configuration extends, later elements in the array take priority over previous ones.
+
+``optimization_level`` Please refer to the [relevant clang documentation](https://clang.llvm.org/docs/CommandGuide/clang.html#code-generation-options).
+
+``target`` Clang triplet this configuration uses, please refer to the [relevant clang documentation](https://clang.llvm.org/docs/CrossCompilation.html#target-triple).
+
+Note: the WASI SDK needs to be installed to use the ``wasm32-unknown-wasi`` to compile to webassmbly, and ``$WASI_SDK_PATH`` needs to be set, please refer to the [wasi-sdk installation guide](https://github.com/WebAssembly/wasi-sdk?tab=readme-ov-file#install).
+
+
 

@@ -160,31 +160,38 @@ void Project::Build(Configuration config, std::string outputDir) {
     }else{
         pcmDir = config.buildDir;
     }
+    std::string clangDir;
+    if(config.target == "wasm32-unknown-wasi"){
+         clangDir = "${WASI_SDK_PATH}/bin/clang++ --sysroot=${WASI_SDK_PATH}/share/wasi-sysroot";
+         name+=".wasm";
+    } else{
+         clangDir = "clang++";
+    }
 
     for(const std::string& moduleFile : config.moduleFiles){
-        system(std::format("clang++ -std={} {}.cppm --precompile -fprebuilt-module-path={} -o {}/{}.pcm", config.standard, moduleFile, pcmDir, pcmDir, moduleFile).c_str());
+        system(std::format("{} -std={} {}.cppm --precompile -fprebuilt-module-path={} -o {}/{}.pcm {}", clangDir, config.standard, moduleFile, pcmDir, pcmDir, moduleFile, target).c_str());
     }
     std::vector<std::thread> threads = std::vector<std::thread>(config.moduleFiles.size() + config.sourceFiles.size());
     std::string files;
     for(std::int_fast32_t i = 0; i < config.moduleFiles.size(); i++) {
         files+=std::format("{}/{}.o ",config.buildDir, config.moduleFiles[i]);
-        threads[i] = std::thread([i, config, pcmDir, target](){
-            system(std::format("clang++ -std={} {}/{}.pcm -fprebuilt-module-path={} -c -O{} -o {}/{}.o {}", config.standard, pcmDir, config.moduleFiles[i], pcmDir, config.optimizationLevel, config.buildDir, config.moduleFiles[i], target).c_str());
+        threads[i] = std::thread([i, config, pcmDir, target, clangDir](){
+            system(std::format("{} -std={} {}/{}.pcm -fprebuilt-module-path={} -c -O{} -o {}/{}.o {}", clangDir, config.standard, pcmDir, config.moduleFiles[i], pcmDir, config.optimizationLevel, config.buildDir, config.moduleFiles[i], target).c_str());
         });
     }
     for(std::int_fast32_t i = 0; i < config.sourceFiles.size(); i++) {
         files+=std::format("{}/{}_source.o ",config.buildDir, config.sourceFiles[i]);
-        threads[config.moduleFiles.size()+i] = std::thread([i, config, pcmDir, target](){
-        system(std::format("clang++ -std={} {}.cpp -fprebuilt-module-path={} -c -O{} -o {}/{}_source.o {}", config.standard, config.sourceFiles[i], pcmDir, config.optimizationLevel, config.buildDir, config.sourceFiles[i], target).c_str());
+        threads[config.moduleFiles.size()+i] = std::thread([i, config, pcmDir, target, clangDir](){
+        system(std::format("{} -std={} {}.cpp -fprebuilt-module-path={} -c -O{} -o {}/{}_source.o {}", clangDir, config.standard, config.sourceFiles[i], pcmDir, config.optimizationLevel, config.buildDir, config.sourceFiles[i], target).c_str());
         });
     }
     for(std::thread& thread : threads){
         thread.join();
     }
     if(config.type == "executable"){
-         system(std::format("clang++ {}-O{} -o {}/{} {}", files, config.optimizationLevel, outputDir, name, target).c_str());
+         system(std::format("{} {}-O{} -o {}/{} {}", clangDir, files, config.optimizationLevel, outputDir, name, target).c_str());
     } else if(config.type == "library"){
-         system(std::format("ar r {}/{}.a {}", outputDir, name, files, target).c_str());
+         system(std::format("ar r {}/{}.a {}", clangDir, outputDir, name, files, target).c_str());
     } else if(config.type == "shared-library"){
         system(std::format("ar r {}/{}.so {} -shared", outputDir, name, files, target).c_str());
     }
