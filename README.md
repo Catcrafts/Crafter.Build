@@ -63,7 +63,7 @@ Save and close, then run ``crafter-build -c debug``. Now you can run the ``hello
 
 ``-c`` The name of the configuration to build.
 
-``-p`` The name of the project file.
+``-p`` The path to the project file, defaults to ``project.json``.
 
 ``-o`` Overrides the output folder.
 

@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
     for (std::uint_fast32_t i = 1; i < argc; i++) {
         std::string arg = std::string(argv[i]);
         if(arg == "--help"){
-             std::println("--help\tDisplays this help message.\n-c The name of the configuration to build.\n-p The path to the project file.\n-o Overrides the output folder.\n");
+             std::println("--help\tDisplays this help message.\n-c The name of the configuration to build.\n-p The path to the project file. defualts to project.json\n-o Overrides the output folder.\n");
              return 0;
         } else if(arg == "-c"){
             configuration = argv[++i];
