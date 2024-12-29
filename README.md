@@ -21,7 +21,7 @@ cd Crafter.Build
 
 ## Quickstart
 
-create a ``project.json`` in an empty folder, open it in your preffered text editor.
+create a ``project.json`` in an empty folder, open it in your preferred text editor.
 Create a basic project file, with a base configuration and debug and release configuration
 ```JSON
 {
