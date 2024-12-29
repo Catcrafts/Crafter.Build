@@ -86,10 +86,10 @@ Save and close, then run ``crafter-build -c debug``. Now you can run the ``hello
 
 ``dependencies`` An object array of the dependencies of this project, example:
 ```json
-"dependencies":[
+"dependencies": [
     {
         "path":"/home/Crafter.Build/project.json",
-         "configuration":"debug-lib"
+        "configuration":"debug-lib"
     }
 ]
 ```
