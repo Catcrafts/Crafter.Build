@@ -23,6 +23,7 @@ module;
 #include <cstdint>
 #include <vector>
 #include "json.hpp"
+#include <unordered_map>
 export module Crafter.Build:Configuration;
 import :Dependency;
 
@@ -41,6 +42,7 @@ export namespace Crafter::Build {
         std::string type;
         std::string target;
         std::vector<Dependency> dependencies;
+        std::unordered_map<std::string, nlohmann::json> additionalProperties;
         Configuration(std::string name, std::string standard, std::vector<fs::path> sourceFiles, std::vector<fs::path> moduleFiles, std::string optimizationLevel, std::string buildDir, std::string outputDir, std::string type, std::string target, std::vector<Dependency> dependencies);
         Configuration(nlohmann::json& configs, nlohmann::json& config, fs::path workingDir);
     };

@@ -24,72 +24,71 @@ module;
 #include <fstream>
 #include "json.hpp"
 #include <filesystem>
+#include <iostream>
+#include <chrono>
 module Crafter.Build:ConfigurationImpl;
 import :Configuration;
 import :Dependency;
 using namespace Crafter::Build;
 namespace fs = std::filesystem;
+using namespace std::chrono;
 
 Configuration::Configuration(std::string name, std::string standard, std::vector<fs::path> sourceFiles, std::vector<fs::path> moduleFiles, std::string optimizationLevel, std::string buildDir, std::string outputDir, std::string type, std::string target, std::vector<Dependency> dependencies): name(name), standard(standard), sourceFiles(sourceFiles), moduleFiles(moduleFiles), optimizationLevel(optimizationLevel), buildDir(buildDir), outputDir(outputDir), type(type), target(target), dependencies(dependencies) {
 
 }
 
 Configuration::Configuration(nlohmann::json& configs, nlohmann::json& config, fs::path workingDir) {
-    name = config["name"].get<std::string>();
-    if(config.contains("standard")) {
-        standard = config["standard"].get<std::string>();
-    }
-    if(config.contains("target")) {
-        target = config["target"].get<std::string>();
-    }
-    if(config.contains("type")) {
-        type = config["type"].get<std::string>();
-    }
-    if(config.contains("source_files")) {
-        const std::vector<std::string> tempSourceFiles = config["source_files"].get<std::vector<std::string>>();
-        sourceFiles = std::vector<fs::path>(tempSourceFiles.size());
-        for(std::int_fast32_t i = 0; i < sourceFiles.size(); i++){
-            std::filesystem::path filePath (tempSourceFiles[i]);
-            std::filesystem::path fullFilePath = workingDir / filePath;
-            sourceFiles[i] = fullFilePath.generic_string();
+     name = config["name"].get<std::string>();
+     for (auto& [key, val] : config.items())
+     {
+        if(key == "standard"){
+              standard = val.get<std::string>();
+        } else if(key == "target") {
+             target = val.get<std::string>();
+        } else if(key == "type") {
+            type = val.get<std::string>();
+        } else if(key == "source_files") {
+            const std::vector<std::string> tempSourceFiles = val.get<std::vector<std::string>>();
+            sourceFiles = std::vector<fs::path>(tempSourceFiles.size());
+            for(std::int_fast32_t i = 0; i < sourceFiles.size(); i++){
+                const std::filesystem::path filePath (tempSourceFiles[i]);
+                const std::filesystem::path fullFilePath = workingDir / filePath;
+                sourceFiles[i] = fullFilePath.generic_string();
+            }
+        } else if(key == "module_files") {
+            const std::vector<std::string> tempModuleFiles = val.get<std::vector<std::string>>();
+            moduleFiles = std::vector<fs::path>(tempModuleFiles.size());
+            for(std::int_fast32_t i = 0; i < moduleFiles.size(); i++){
+                const std::filesystem::path filePath (tempModuleFiles[i]);
+                const std::filesystem::path fullFilePath = workingDir / filePath;
+                moduleFiles[i] = fullFilePath.generic_string();
+            }
+        } else if(key == "optimization_level") {
+            optimizationLevel = val.get<std::string>();
+        } else if(key == "build_dir") {
+            const std::string tempBuildDir = val.get<std::string>();
+            const std::filesystem::path buildPath (tempBuildDir);
+            const std::filesystem::path fullBuildPath = workingDir / buildPath;
+            buildDir = fullBuildPath.generic_string();
+        } else if(key == "output_dir") {
+            const std::string tempOutputDir = val.get<std::string>();
+            const std::filesystem::path outputPath (tempOutputDir);
+            const std::filesystem::path fullOutputPath = workingDir / outputPath;
+            outputDir = fullOutputPath.generic_string();
+        } else if(key == "dependencies") {
+            for (auto it : val) {
+                dependencies.emplace_back(val["path"].get<std::string>(), val["configuration"].get<std::string>());
+            }
+        } else if(key != "extends") {
+            additionalProperties.insert({key, val});
         }
-    }
-    if(config.contains("module_files")) {
-        const std::vector<std::string> tempModuleFiles = config["module_files"].get<std::vector<std::string>>();
-        moduleFiles = std::vector<fs::path>(tempModuleFiles.size());
-        for(std::int_fast32_t i = 0; i < moduleFiles.size(); i++){
-            std::filesystem::path filePath (tempModuleFiles[i]);
-            std::filesystem::path fullFilePath = workingDir / filePath;
-            moduleFiles[i] = fullFilePath.generic_string();
-        }
-    }
-    if(config.contains("optimization_level")) {
-        optimizationLevel = config["optimization_level"].get<std::string>();
-    }
-    if(config.contains("build_dir")) {
-        const std::string tempBuildDir = config["build_dir"].get<std::string>();
-        std::filesystem::path buildPath (tempBuildDir);
-        std::filesystem::path fullBuildPath = workingDir / buildPath;
-        buildDir = fullBuildPath.generic_string();
-    }
-    if(config.contains("output_dir")) {
-        const std::string tempOutputDir = config["output_dir"].get<std::string>();
-        std::filesystem::path outputPath (tempOutputDir);
-        std::filesystem::path fullOutputPath = workingDir / outputPath;
-        outputDir = fullOutputPath.generic_string();
-    }
-    if(config.contains("dependencies")) {
-        nlohmann::json dependenciesJson = config["dependencies"];
-        for (nlohmann::json::iterator it = dependenciesJson.begin(); it != dependenciesJson.end(); ++it) {
-            dependencies.emplace_back((*it)["path"].get<std::string>(), (*it)["configuration"].get<std::string>());
-        }
-    }
-    if(config.contains("extends")){
+     }
+    if(config.contains("extends")) {
         const std::vector<std::string> extends = config["extends"].get<std::vector<std::string>>();
         for(const std::string& extendName : extends) {
-            for (nlohmann::json::iterator it = configs.begin(); it != configs.end(); ++it) {
-                if((*it)["name"].get<std::string>() == extendName){
-                    Configuration extendData = Configuration(configs, (*it), workingDir);
+            for (auto it : configs) {
+                if(it["name"].get<std::string>() == extendName) {
+                    Configuration extendData = Configuration(configs, it, workingDir);
                     if(!extendData.standard.empty() && standard.empty()){
                         standard = extendData.standard;
                     }
@@ -123,3 +122,4 @@ Configuration::Configuration(nlohmann::json& configs, nlohmann::json& config, fs
         }
     }
 }
+
