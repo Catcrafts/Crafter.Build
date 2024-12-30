@@ -21,6 +21,7 @@ USA
 module;
 #include <vector>
 #include <string>
+#include <print>
 #include <fstream>
 #include <iostream>
 #include "json.hpp"
@@ -61,17 +62,9 @@ void Project::Build(Configuration configuration) const {
 void Project::Build(Configuration config, fs::path outputDir) const {
     if (!fs::exists(config.buildDir)) {
         fs::create_directory(config.buildDir);
-    } else {
-        for (const auto& entry : fs::directory_iterator(config.buildDir)){
-            fs::remove_all(entry.path());
-        }
     }
     if (!fs::exists(outputDir)) {
         fs::create_directory(outputDir);
-    } else {
-        for (const auto& entry : fs::directory_iterator(outputDir)){
-            fs:remove_all(entry.path());
-        }
     }
 
     std::string target;
@@ -120,22 +113,28 @@ void Project::Build(Configuration config, fs::path outputDir) const {
 
     //clangDir+= std::format(" -I {} ", pcmDir);
 
-    for(const fs::path& moduleFile : config.moduleFiles){
-        system(std::format("{} -std={} {}.cppm --precompile -fprebuilt-module-path={} -o {}.pcm {}", clangDir, config.standard, moduleFile.generic_string(), pcmDir.generic_string(), (pcmDir/moduleFile.filename()).generic_string(), target).c_str());
-    }
-    std::vector<std::thread> threads = std::vector<std::thread>(config.moduleFiles.size() + config.sourceFiles.size());
+    std::vector<fs::path> updatedModules;
     std::string files;
-    for(std::int_fast32_t i = 0; i < config.moduleFiles.size(); i++) {
-        files+=std::format("{}.o ",(config.buildDir/config.moduleFiles[i].filename()).generic_string());
-        threads[i] = std::thread([i, config, pcmDir, target, clangDir](){
-            system(std::format("{} -std={} {}.pcm -fprebuilt-module-path={} -c -O{} -o {}.o {}", clangDir, config.standard, (pcmDir/config.moduleFiles[i].filename()).generic_string(), pcmDir.generic_string(), config.optimizationLevel, (config.buildDir/config.moduleFiles[i].filename()).generic_string(), target).c_str());
+    for(const fs::path& moduleFile : config.moduleFiles){
+        if(!fs::exists((pcmDir/moduleFile.filename()).generic_string()+".pcm") || fs::last_write_time(moduleFile.generic_string()+".cppm") > fs::last_write_time((pcmDir/moduleFile.filename()).generic_string()+".pcm")) {
+            updatedModules.push_back(pcmDir/moduleFile.filename());
+            system(std::format("{} -std={} {}.cppm --precompile -fprebuilt-module-path={} -o {}.pcm {}", clangDir, config.standard, moduleFile.generic_string(), pcmDir.generic_string(), (pcmDir/moduleFile.filename()).generic_string(), target).c_str());
+        }
+        files+=std::format("{}.o ",(config.buildDir/moduleFile.filename()).generic_string());
+    }
+    std::vector<std::thread> threads;
+    for(const fs::path moduleFile : updatedModules) {
+        threads.emplace_back([moduleFile, config, pcmDir, target, clangDir](){
+            system(std::format("{} -std={} {}.pcm -fprebuilt-module-path={} -c -O{} -o {}.o {}", clangDir, config.standard, (pcmDir/moduleFile.filename()).generic_string(), pcmDir.generic_string(), config.optimizationLevel, (config.buildDir/moduleFile.filename()).generic_string(), target).c_str());
         });
     }
-    for(std::int_fast32_t i = 0; i < config.sourceFiles.size(); i++) {
-        files+=std::format("{}_source.o ",(config.buildDir/config.sourceFiles[i].filename()).generic_string());
-        threads[config.moduleFiles.size()+i] = std::thread([i, config, pcmDir, target, clangDir](){
-            system(std::format("{} -std={} {}.cpp -fprebuilt-module-path={} -c -O{} -o {}_source.o {}", clangDir, config.standard, config.sourceFiles[i].generic_string(), pcmDir.generic_string(), config.optimizationLevel, (config.buildDir/config.sourceFiles[i].filename()).generic_string(), target).c_str());
-        });
+    for(const fs::path& soureFile : config.sourceFiles) {
+        files+=std::format("{}_source.o ",(config.buildDir/soureFile.filename()).generic_string());
+        if(!fs::exists((config.buildDir/soureFile.filename()).generic_string()+"_source.o") || fs::last_write_time(soureFile.generic_string()+".cpp") > fs::last_write_time((config.buildDir/soureFile.filename()).generic_string()+"_source.o")) {
+            threads.emplace_back([soureFile, config, pcmDir, target, clangDir](){
+                system(std::format("{} -std={} {}.cpp -fprebuilt-module-path={} -c -O{} -o {}_source.o {}", clangDir, config.standard, soureFile.generic_string(), pcmDir.generic_string(), config.optimizationLevel, (config.buildDir/soureFile.filename()).generic_string(), target).c_str());
+            });
+        }
     }
     for(std::thread& thread : threads){
         thread.join();
