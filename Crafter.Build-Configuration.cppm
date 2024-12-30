@@ -1,6 +1,6 @@
 /*
 Crafter.Build
-Copyright (C) 2024 Jorijn van der Graaf
+Copyright (C) 2024 Catcrafts
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
