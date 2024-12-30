@@ -11,7 +11,7 @@ git
 ```
 ## Clone and build:
 ```bash
-git clone https://github.com/The-Mighty-Cat/Crafter.Build.git
+git clone https://github.com/Catcrafts/Crafter.Build.git
 cd Crafter.Build
 ./build.sh
 ```
