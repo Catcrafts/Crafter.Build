@@ -21,7 +21,7 @@ cd Crafter.Build
 
 ## Quickstart
 
-create a ``project.json`` in an empty folder, open it in your preffered text editor.
+create a ``project.json`` in an empty folder, open it in your preferred text editor.
 Create a basic project file, with a base configuration and debug and release configuration
 ```JSON
 {
@@ -83,6 +83,17 @@ Save and close, then run ``crafter-build -c debug``. Now you can run the ``hello
 ``extends`` An array of configuration names that this configuration extends, later elements in the array take priority over previous ones.
 
 ``optimization_level`` Please refer to the [relevant clang documentation](https://clang.llvm.org/docs/CommandGuide/clang.html#code-generation-options).
+
+``dependencies`` An object array of the dependencies of this project, example:
+```json
+"dependencies": [
+    {
+        "path":"/home/Crafter.Build/project.json",
+        "configuration":"debug-lib"
+    }
+]
+```
+This will now link the library of Crafter.Build in the configuration you use this in.
 
 ``target`` Clang triplet this configuration uses, please refer to the [relevant clang documentation](https://clang.llvm.org/docs/CrossCompilation.html#target-triple).
 
