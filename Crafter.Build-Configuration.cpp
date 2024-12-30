@@ -19,19 +19,10 @@ USA
 */
 
 module;
-#include <vector>
-#include <string>
-#include <fstream>
 #include "json.hpp"
-#include <filesystem>
-#include <iostream>
-#include <chrono>
-module Crafter.Build:ConfigurationImpl;
-import :Configuration;
-import :Dependency;
+module Crafter.Build;
 using namespace Crafter::Build;
 namespace fs = std::filesystem;
-using namespace std::chrono;
 
 Configuration::Configuration(std::string name, std::string standard, std::vector<fs::path> sourceFiles, std::vector<fs::path> moduleFiles, std::string optimizationLevel, std::string buildDir, std::string outputDir, std::string type, std::string target, std::vector<Dependency> dependencies): name(name), standard(standard), sourceFiles(sourceFiles), moduleFiles(moduleFiles), optimizationLevel(optimizationLevel), buildDir(buildDir), outputDir(outputDir), type(type), target(target), dependencies(dependencies) {
 
@@ -122,4 +113,3 @@ Configuration::Configuration(nlohmann::json& configs, nlohmann::json& config, fs
         }
     }
 }
-

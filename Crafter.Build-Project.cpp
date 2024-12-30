@@ -26,11 +26,7 @@ module;
 #include "json.hpp"
 #include <filesystem>
 #include <thread>
-#include <stdlib.h>
-module Crafter.Build:ProjectImpl;
-import :Project;
-import :Configuration;
-import :Dependency;
+module Crafter.Build;
 using namespace Crafter::Build;
 namespace fs = std::filesystem;
 

@@ -20,8 +20,7 @@ USA
 
 module;
 #include <string>
-module Crafter.Build:DependencyImpl;
-import :Dependency;
+module Crafter.Build;
 using namespace Crafter::Build;
 
 Dependency::Dependency(std::string path, std::string configuration): path(path), configuration(configuration) {

@@ -20,7 +20,6 @@ USA
 
 module;
 #include <string>
-#include <cstdint>
 #include <vector>
 #include "json.hpp"
 #include <unordered_map>
