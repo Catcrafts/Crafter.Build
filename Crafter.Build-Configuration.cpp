@@ -77,7 +77,7 @@ Configuration::Configuration(nlohmann::json& configs, nlohmann::json& config, fs
             outputDir = fullOutputPath.generic_string();
         } else if(key == "dependencies") {
             for (auto it : val) {
-                dependencies.emplace_back(val["path"].get<std::string>(), val["configuration"].get<std::string>());
+                dependencies.emplace_back(it["path"].get<std::string>(), it["configuration"].get<std::string>());
             }
         } else if(key != "extends") {
             additionalProperties.insert({key, val});
