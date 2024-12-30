@@ -28,7 +28,7 @@ Configuration::Configuration(std::string name, std::string standard, std::vector
 
 }
 
-Configuration::Configuration(nlohmann::json& configs, nlohmann::json& config, fs::path workingDir) {
+Configuration::Configuration(const nlohmann::json& configs, const nlohmann::json& config, fs::path workingDir) {
      name = config["name"].get<std::string>();
      for (auto& [key, val] : config.items())
      {
