@@ -19,25 +19,27 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
 module;
-#include <vector>
 #include <string>
 #include <filesystem>
-export module Crafter.Build:Project;
+#include <mutex>
+#include <unordered_map>
+export module Crafter.Build:ModuleFile;
 import :Configuration;
 namespace fs = std::filesystem;
 
 export namespace Crafter::Build {
-    class Project {
+    class ModuleFile {
     public:
-        std::string name;
+        inline static std::mutex allFilesMutex;
+        std::mutex fileMutex;
+        inline static std::unordered_map<fs::path, ModuleFile*> allFiles;
+        bool needsRecompiling;
+        bool recompiled = false;
         fs::path path;
-        std::vector<Configuration> configurations;
-        Project(std::string name, fs::path path, std::vector<Configuration> configurations);
-        void Build(std::string configuration) const;
-        void Build(std::string configuration, fs::path outputDir) const;
-        void Build(Configuration configuration) const;
-        void Build(Configuration configuration, fs::path outputDir) const;
-        void SaveToJSON(fs::path path) const;
-        static Project LoadFromJSON(fs::path path);
+        std::vector<ModuleFile*> dependencies;
+        static ModuleFile* CompileModuleFile(fs::path path, std::string clangDir, const Configuration& config, fs::path pcmDir, std::string target);
+    private:
+        ModuleFile(fs::path path, std::string clangDir, const Configuration& config, fs::path pcmDir, std::string target);
+        void Compile(std::string clangDir, const Configuration& config, fs::path pcmDir, std::string target);
     };
 }

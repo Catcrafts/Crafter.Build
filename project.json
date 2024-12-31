@@ -4,8 +4,8 @@
         {
             "name": "base",
             "standard": "c++26",
-            "source_files": ["Crafter.Build-Configuration", "Crafter.Build-Project", "Crafter.Build-Dependency"],
-            "module_files": ["Crafter.Build-Dependency", "Crafter.Build-Configuration", "Crafter.Build-Project", "Crafter.Build"],
+            "source_files": ["Crafter.Build-Configuration", "Crafter.Build-Project", "Crafter.Build-Dependency", "Crafter.Build-ModuleFile"],
+            "module_files": ["Crafter.Build-Dependency", "Crafter.Build-Configuration", "Crafter.Build-Project", "Crafter.Build", "Crafter.Build-ModuleFile"],
             "build_dir": "./build",
             "output_dir": "./bin"
         },

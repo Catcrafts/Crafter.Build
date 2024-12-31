@@ -1,11 +1,12 @@
 /*
 Crafter.Build
 Copyright (C) 2024 Catcrafts
+Catcrafts.net
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
 License as published by the Free Software Foundation; either
-version 3 of the License, or (at your option) any later version.
+version 3.0 of the License, or (at your option) any later version.
 
 This library is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -14,8 +15,7 @@ Lesser General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
-USA
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 */
 
 module;
@@ -111,34 +111,32 @@ void Project::Build(Configuration config, fs::path outputDir) const {
         thread.join();
     }
 
-    //clangDir+= std::format(" -I {} ", pcmDir);
-
-    std::vector<fs::path> updatedModules;
     std::string files;
-    for(const fs::path& moduleFile : config.moduleFiles){
-        if(!fs::exists((pcmDir/moduleFile.filename()).generic_string()+".pcm") || fs::last_write_time(moduleFile.generic_string()+".cppm") > fs::last_write_time((pcmDir/moduleFile.filename()).generic_string()+".pcm")) {
-            updatedModules.push_back(pcmDir/moduleFile.filename());
-            system(std::format("{} -std={} {}.cppm --precompile -fprebuilt-module-path={} -o {}.pcm {}", clangDir, config.standard, moduleFile.generic_string(), pcmDir.generic_string(), (pcmDir/moduleFile.filename()).generic_string(), target).c_str());
-        }
-        files+=std::format("{}.o ",(config.buildDir/moduleFile.filename()).generic_string());
-    }
-    std::vector<std::thread> threads;
-    for(const fs::path moduleFile : updatedModules) {
-        threads.emplace_back([moduleFile, config, pcmDir, target, clangDir](){
-            system(std::format("{} -std={} {}.pcm -fprebuilt-module-path={} -c -O{} -o {}.o {}", clangDir, config.standard, (pcmDir/moduleFile.filename()).generic_string(), pcmDir.generic_string(), config.optimizationLevel, (config.buildDir/moduleFile.filename()).generic_string(), target).c_str());
+    std::vector<std::thread> moduleThreads(config.moduleFiles.size());
+    for(std::uint_fast32_t i = 0; i < config.moduleFiles.size(); i++) {
+        moduleThreads[i] = std::thread([i, &config, pcmDir, target, clangDir](){
+            ModuleFile::CompileModuleFile(config.moduleFiles[i], clangDir, config, pcmDir, target);
         });
+        files+=std::format("{}.o ",(config.buildDir/config.moduleFiles[i].filename()).generic_string());
     }
-    for(const fs::path& soureFile : config.sourceFiles) {
-        files+=std::format("{}_source.o ",(config.buildDir/soureFile.filename()).generic_string());
-        if(!fs::exists((config.buildDir/soureFile.filename()).generic_string()+"_source.o") || fs::last_write_time(soureFile.generic_string()+".cpp") > fs::last_write_time((config.buildDir/soureFile.filename()).generic_string()+"_source.o")) {
-            threads.emplace_back([soureFile, config, pcmDir, target, clangDir](){
-                system(std::format("{} -std={} {}.cpp -fprebuilt-module-path={} -c -O{} -o {}_source.o {}", clangDir, config.standard, soureFile.generic_string(), pcmDir.generic_string(), config.optimizationLevel, (config.buildDir/soureFile.filename()).generic_string(), target).c_str());
+    for(std::thread& thread : moduleThreads){
+        thread.join();
+    }
+
+    std::vector<std::thread> threads;
+    for(std::uint_fast32_t i = 0; i < config.sourceFiles.size(); i++) {
+        files+=std::format("{}_source.o ",(config.buildDir/config.sourceFiles[i].filename()).generic_string());
+        if(!fs::exists((config.buildDir/config.sourceFiles[i].filename()).generic_string()+"_source.o") || fs::last_write_time(config.sourceFiles[i].generic_string()+".cpp") > fs::last_write_time((config.buildDir/config.sourceFiles[i].filename()).generic_string()+"_source.o")) {
+            threads.emplace_back([i, &config, pcmDir, target, clangDir](){
+                system(std::format("{} -std={} {}.cpp -fprebuilt-module-path={} -c -O{} -o {}_source.o {}", clangDir, config.standard, config.sourceFiles[i].generic_string(), pcmDir.generic_string(), config.optimizationLevel, (config.buildDir/config.sourceFiles[i].filename()).generic_string(), target).c_str());
             });
         }
     }
+
     for(std::thread& thread : threads){
         thread.join();
     }
+
     if(config.type == "executable"){
          system(std::format("{} {}-O{} -o {} {} {}", clangDir, files, config.optimizationLevel, (outputDir/name).generic_string(), target, libs).c_str());
     } else if(config.type == "library"){
