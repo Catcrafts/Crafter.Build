@@ -24,7 +24,7 @@ module Crafter.Build;
 using namespace Crafter::Build;
 namespace fs = std::filesystem;
 
-Configuration::Configuration(std::string name, std::string standard, std::vector<fs::path> sourceFiles, std::vector<fs::path> moduleFiles, std::string optimizationLevel, std::string buildDir, std::string outputDir, std::string type, std::string target, std::vector<Dependency> dependencies): name(name), standard(standard), sourceFiles(sourceFiles), moduleFiles(moduleFiles), optimizationLevel(optimizationLevel), buildDir(buildDir), outputDir(outputDir), type(type), target(target), dependencies(dependencies) {
+Configuration::Configuration(std::string name, std::string standard, std::vector<fs::path> sourceFiles, std::vector<fs::path> moduleFiles, std::string optimizationLevel, std::string buildDir, std::string outputDir, std::string type, std::string target, std::vector<Dependency> dependencies, std::vector<fs::path> additionalFiles): name(name), standard(standard), sourceFiles(sourceFiles), moduleFiles(moduleFiles), optimizationLevel(optimizationLevel), buildDir(buildDir), outputDir(outputDir), type(type), target(target), dependencies(dependencies), additionalFiles(additionalFiles) {
 
 }
 
@@ -53,6 +53,14 @@ Configuration::Configuration(const nlohmann::json& configs, const nlohmann::json
                 const std::filesystem::path filePath (tempModuleFiles[i]);
                 const std::filesystem::path fullFilePath = workingDir / filePath;
                 moduleFiles[i] = fullFilePath.generic_string();
+            }
+        } else if(key == "additional_files") {
+            const std::vector<std::string> tempAdditionalFiles = val.get<std::vector<std::string>>();
+            additionalFiles = std::vector<fs::path>(tempAdditionalFiles.size());
+            for(std::int_fast32_t i = 0; i < additionalFiles.size(); i++){
+                const std::filesystem::path filePath (tempAdditionalFiles[i]);
+                const std::filesystem::path fullFilePath = workingDir / filePath;
+                additionalFiles[i] = fullFilePath.generic_string();
             }
         } else if(key == "optimization_level") {
             optimizationLevel = val.get<std::string>();
@@ -88,6 +96,9 @@ Configuration::Configuration(const nlohmann::json& configs, const nlohmann::json
                     }
                     if(!extendData.moduleFiles.empty()){
                         moduleFiles.insert(moduleFiles.end(), extendData.moduleFiles.begin(), extendData.moduleFiles.end());
+                    }
+                    if(!extendData.additionalFiles.empty()){
+                        additionalFiles.insert(additionalFiles.end(), extendData.additionalFiles.begin(), extendData.additionalFiles.end());
                     }
                     if(!extendData.optimizationLevel.empty() && optimizationLevel.empty()){
                         optimizationLevel = extendData.optimizationLevel;

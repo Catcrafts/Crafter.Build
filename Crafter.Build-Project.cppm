@@ -35,8 +35,10 @@ export namespace Crafter::Build {
         Project(std::string name, fs::path path, std::vector<Configuration> configurations);
         void Build(std::string configuration) const;
         void Build(std::string configuration, fs::path outputDir) const;
+        void Build(std::string configuration, fs::path outputDir, fs::path binDir) const;
         void Build(Configuration configuration) const;
         void Build(Configuration configuration, fs::path outputDir) const;
+        void Build(Configuration configuration, fs::path outputDir, fs::path binDir) const;
         void SaveToJSON(fs::path path) const;
         static Project LoadFromJSON(fs::path path);
     };

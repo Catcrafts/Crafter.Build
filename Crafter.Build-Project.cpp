@@ -38,7 +38,7 @@ Project::Project(std::string name, fs::path path, std::vector<Configuration> con
 void Project::Build(std::string configuration) const {
     for(const Configuration& config : configurations) {
         if(config.name == configuration){
-            Build(config, config.outputDir);
+            Build(config);
             return;
         }
     }
@@ -55,11 +55,25 @@ void Project::Build(std::string configuration, fs::path outputDir) const {
     throw std::runtime_error("Configuration: " + configuration + " not found.");
 }
 
+void Project::Build(std::string configuration, fs::path outputDir, fs::path binDir) const {
+    for(const Configuration& config : configurations) {
+        if(config.name == configuration){
+            Build(config, outputDir, binDir);
+            return;
+        }
+    }
+    throw std::runtime_error("Configuration: " + configuration + " not found.");
+}
+
 void Project::Build(Configuration configuration) const {
     Build(configuration, configuration.outputDir);
 }
 
 void Project::Build(Configuration config, fs::path outputDir) const {
+    Build(config, outputDir, outputDir);
+}
+
+void Project::Build(Configuration config, fs::path outputDir, fs::path binDir) const {
     if (!fs::exists(config.buildDir)) {
         fs::create_directory(config.buildDir);
     }
@@ -89,8 +103,8 @@ void Project::Build(Configuration config, fs::path outputDir) const {
     for(std::int_fast32_t i = 0; i < depThreads.size(); i++) {
         Project project = Project::LoadFromJSON(config.dependencies[i].path);
         libs+=std::format(" -l{}", project.name);
-        depThreads[i] = std::thread([i, pcmDir, config, project]() {
-            project.Build(config.dependencies[i].configuration, pcmDir);
+        depThreads[i] = std::thread([i, pcmDir, config, project, binDir]() {
+            project.Build(config.dependencies[i].configuration, pcmDir, binDir);
         });
     }
 
@@ -98,11 +112,15 @@ void Project::Build(Configuration config, fs::path outputDir) const {
 
     std::string clangDir;
     if(config.target == "wasm32-unknown-wasi" || config.target == "wasm64-unknown-wasi"){
-        clangDir = "${WASI_SDK_PATH}/bin/clang++ --sysroot=${WASI_SDK_PATH}/share/wasi-sysroot -Wno-unused-command-line-argument";
-        name+=".wasm";
+        clangDir = "${WASI_SDK_PATH}/bin/clang++ --sysroot=${WASI_SDK_PATH}/share/wasi-sysroot -Wno-unused-command-line-argument -Wl,--export-all -fno-exceptions";
+        if(config.type != "library") {
+            name+=".wasm";
+        }
     } else if(config.target == "wasm32" || config.target == "wasm64") {
-        clangDir = "${WASI_SDK_PATH}/bin/clang++ --no-standard-libraries -Wl,--no-entry -Wl,--export-all -Wno-unused-command-line-argument";
-        name+=".wasm";
+        clangDir = "${WASI_SDK_PATH}/bin/clang++ --no-standard-libraries -Wl,--no-entry -Wl,--export-all -Wno-unused-command-line-argument -fno-exceptions";
+        if(config.type != "library") {
+            name+=".wasm";
+        }
     } else {
         clangDir = "clang++ -Wno-unused-command-line-argument";
     }
@@ -145,6 +163,14 @@ void Project::Build(Configuration config, fs::path outputDir) const {
         system(std::format("ar r {}.so {} -shared", (outputDir/fs::path("lib"+name)).generic_string(), files).c_str());
     }
 
+    for(const fs::path& additionalFile : config.additionalFiles){
+        if(!fs::exists(binDir/additionalFile.filename())) {
+            fs::copy(additionalFile, binDir);
+        } else if (fs::last_write_time(additionalFile) > fs::last_write_time(binDir/additionalFile.filename())){
+            fs::remove(binDir/additionalFile.filename());
+            fs::copy(additionalFile, binDir);
+        }
+    }
 }
 
 Project Project::LoadFromJSON(fs::path path) {
