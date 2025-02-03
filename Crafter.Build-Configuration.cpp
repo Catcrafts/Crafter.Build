@@ -24,7 +24,7 @@ module Crafter.Build;
 using namespace Crafter::Build;
 namespace fs = std::filesystem;
 
-Configuration::Configuration(std::string name, std::string standard, std::vector<fs::path> sourceFiles, std::vector<fs::path> moduleFiles, std::string optimizationLevel, std::string buildDir, std::string outputDir, std::string type, std::string target, std::vector<Dependency> dependencies, std::vector<fs::path> additionalFiles): name(name), standard(standard), sourceFiles(sourceFiles), moduleFiles(moduleFiles), optimizationLevel(optimizationLevel), buildDir(buildDir), outputDir(outputDir), type(type), target(target), dependencies(dependencies), additionalFiles(additionalFiles) {
+Configuration::Configuration(std::string name, std::string standard, std::vector<fs::path> sourceFiles, std::vector<fs::path> moduleFiles, std::string optimizationLevel, std::string buildDir, std::string outputDir, std::string type, std::string target, std::string march, std::vector<Dependency> dependencies, std::vector<fs::path> additionalFiles, std::vector<std::string> flags): name(name), standard(standard), sourceFiles(sourceFiles), moduleFiles(moduleFiles), optimizationLevel(optimizationLevel), buildDir(buildDir), outputDir(outputDir), type(type), target(target), march(march), dependencies(dependencies), additionalFiles(additionalFiles), flags(flags) {
 
 }
 
@@ -38,6 +38,8 @@ Configuration::Configuration(const nlohmann::json& configs, const nlohmann::json
              target = val.get<std::string>();
         } else if(key == "type") {
             type = val.get<std::string>();
+        } else if(key == "march") {
+            march = val.get<std::string>();
         } else if(key == "source_files") {
             const std::vector<std::string> tempSourceFiles = val.get<std::vector<std::string>>();
             sourceFiles = std::vector<fs::path>(tempSourceFiles.size());
@@ -46,6 +48,8 @@ Configuration::Configuration(const nlohmann::json& configs, const nlohmann::json
                 const std::filesystem::path fullFilePath = workingDir / filePath;
                 sourceFiles[i] = fullFilePath.generic_string();
             }
+        } else if(key == "flags") {
+            flags = val.get<std::vector<std::string>>();
         } else if(key == "module_files") {
             const std::vector<std::string> tempModuleFiles = val.get<std::vector<std::string>>();
             moduleFiles = std::vector<fs::path>(tempModuleFiles.size());
@@ -117,6 +121,12 @@ Configuration::Configuration(const nlohmann::json& configs, const nlohmann::json
                     }
                     if(!extendData.type.empty() && type.empty()) {
                         type = extendData.type;
+                    }
+                    if(!extendData.march.empty() && march.empty()) {
+                        march = extendData.march;
+                    }
+                    if(!extendData.flags.empty()){
+                        flags.insert(flags.end(), extendData.flags.begin(), extendData.flags.end());
                     }
                     break;
                 }

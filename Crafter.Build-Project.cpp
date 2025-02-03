@@ -74,6 +74,16 @@ void Project::Build(Configuration config, fs::path outputDir) const {
 }
 
 void Project::Build(Configuration config, fs::path outputDir, fs::path binDir) const {
+    if(config.standard.empty()) {
+        config.standard = "c++26";
+    }
+    if(config.march.empty()) {
+        config.march = "native";
+    }
+    if(config.type.empty()) {
+        config.type = "executable";
+    }
+
     if (!fs::exists(config.buildDir)) {
         fs::create_directory(config.buildDir);
     }
@@ -101,7 +111,11 @@ void Project::Build(Configuration config, fs::path outputDir, fs::path binDir) c
     }
 
     for(std::int_fast32_t i = 0; i < depThreads.size(); i++) {
-        Project project = Project::LoadFromJSON(config.dependencies[i].path);
+        if(config.dependencies[i].path.ends_with(".git")) {
+            system(std::format("cd {} && git clone {}", config.buildDir, config.dependencies[i].path).c_str());
+        }
+        config.dependencies[i].path = fs::path(config.dependencies[i].path).filename().replace_extension();
+        Project project = Project::LoadFromJSON(fs::path(config.buildDir)/config.dependencies[i].path/"project.json");
         libs+=std::format(" -l{}", project.name);
         depThreads[i] = std::thread([i, pcmDir, config, project, binDir]() {
             project.Build(config.dependencies[i].configuration, pcmDir, binDir);
@@ -125,30 +139,35 @@ void Project::Build(Configuration config, fs::path outputDir, fs::path binDir) c
         clangDir = "clang++ -Wno-unused-command-line-argument";
     }
 
+    std::string flags;
+    for(const std::string& flag : config.flags) {
+        flags+=flag;
+    }
+
     for(std::thread& thread : depThreads){
         thread.join();
     }
 
     std::string files;
-    std::vector<std::thread> moduleThreads(config.moduleFiles.size());
+    //std::vector<std::thread> moduleThreads(config.moduleFiles.size());
     for(std::uint_fast32_t i = 0; i < config.moduleFiles.size(); i++) {
-        moduleThreads[i] = std::thread([i, &config, pcmDir, target, clangDir](){
+        //moduleThreads[i] = std::thread([i, &config, pcmDir, target, clangDir](){
             ModuleFile::CompileModuleFile(config.moduleFiles[i], clangDir, config, pcmDir, target);
-        });
+        //});
         files+=std::format("{}.o ",(config.buildDir/config.moduleFiles[i].filename()).generic_string());
     }
-    for(std::thread& thread : moduleThreads){
-        thread.join();
-    }
+    // for(std::thread& thread : moduleThreads){
+    //     thread.join();
+    // }
 
     std::vector<std::thread> threads;
     for(std::uint_fast32_t i = 0; i < config.sourceFiles.size(); i++) {
         files+=std::format("{}_source.o ",(config.buildDir/config.sourceFiles[i].filename()).generic_string());
-        if(!fs::exists((config.buildDir/config.sourceFiles[i].filename()).generic_string()+"_source.o") || fs::last_write_time(config.sourceFiles[i].generic_string()+".cpp") > fs::last_write_time((config.buildDir/config.sourceFiles[i].filename()).generic_string()+"_source.o")) {
-            threads.emplace_back([i, &config, pcmDir, target, clangDir](){
-                system(std::format("{} -std={} {}.cpp -fprebuilt-module-path={} -c -O{} -o {}_source.o {}", clangDir, config.standard, config.sourceFiles[i].generic_string(), pcmDir.generic_string(), config.optimizationLevel, (config.buildDir/config.sourceFiles[i].filename()).generic_string(), target).c_str());
+        //if(!fs::exists((config.buildDir/config.sourceFiles[i].filename()).generic_string()+"_source.o") || fs::last_write_time(config.sourceFiles[i].generic_string()+".cpp") > fs::last_write_time((config.buildDir/config.sourceFiles[i].filename()).generic_string()+"_source.o")) {
+            threads.emplace_back([i, &config, pcmDir, target, clangDir, flags](){
+                system(std::format("{} -std={} {}.cpp -fprebuilt-module-path={} -c -O{} -march={} {} -o {}_source.o {}", clangDir, config.standard, config.sourceFiles[i].generic_string(), pcmDir.generic_string(), config.optimizationLevel, config.march, flags, (config.buildDir/config.sourceFiles[i].filename()).generic_string(), target).c_str());
             });
-        }
+        //}
     }
 
     for(std::thread& thread : threads){
@@ -156,11 +175,11 @@ void Project::Build(Configuration config, fs::path outputDir, fs::path binDir) c
     }
 
     if(config.type == "executable"){
-         system(std::format("{} {}-O{} -o {} {} {}", clangDir, files, config.optimizationLevel, (outputDir/name).generic_string(), target, libs).c_str());
+         system(std::format("{} {}-O{} -o {} {} {} -fuse-ld=lld", clangDir, files, config.optimizationLevel, (outputDir/name).generic_string(), target, libs).c_str());
     } else if(config.type == "library"){
          system(std::format("ar r {}.a {}", (outputDir/fs::path("lib"+name)).generic_string(), files).c_str());
     } else if(config.type == "shared-library"){
-        system(std::format("ar r {}.so {} -shared", (outputDir/fs::path("lib"+name)).generic_string(), files).c_str());
+        system(std::format("ar r {}.so {}", (outputDir/fs::path("lib"+name)).generic_string(), files).c_str());
     }
 
     for(const fs::path& additionalFile : config.additionalFiles){

@@ -67,10 +67,12 @@ Save and close, then run ``crafter-build -c debug``. Now you can run the ``hello
 
 ``-o`` Overrides the output folder.
 
+``-r`` Runs the executable after building.
+
 ## configuration properties
 ``name`` Name of the configuration.
 
-``standard`` C++ standard that this configuration uses, please refer to the [relevant clang documentation](https://clang.llvm.org/cxx_status.html)
+``standard`` C++ standard that this configuration uses, please refer to the [relevant clang documentation](https://clang.llvm.org/cxx_status.html), defaults to ``c++26``.
 
 ``source_files`` All source files of the project ``.cpp`` extension is assumed.
 
@@ -82,15 +84,21 @@ Save and close, then run ``crafter-build -c debug``. Now you can run the ``hello
 
 ``output_dir`` The directory where the output files will be placed.
 
+``type`` The type of the project: ``executable``, ``library``, ``shared-library``.
+
 ``extends`` An array of configuration names that this configuration extends, later elements in the array take priority over previous ones.
 
-``optimization_level`` Please refer to the [relevant clang documentation](https://clang.llvm.org/docs/CommandGuide/clang.html#code-generation-options).
+``optimization_level`` Please refer to the [relevant clang documentation](https://clang.llvm.org/docs/CommandGuide/clang.html#code-generation-options), defaults to ``0``.
 
 ``dependencies`` An object array of the dependencies of this project, example:
 ```json
 "dependencies": [
     {
         "path":"/home/Crafter.Build/project.json",
+        "configuration":"debug-lib"
+    }
+    {
+        "path":"https://github.com/Catcrafts/Crafter.Build.git",
         "configuration":"debug-lib"
     }
 ]

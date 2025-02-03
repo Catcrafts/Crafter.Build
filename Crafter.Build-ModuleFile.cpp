@@ -94,11 +94,17 @@ void ModuleFile::Compile(std::string clangDir, const Configuration& config, fs::
             for(ModuleFile* dep : dependencies){
                 dep->Compile(clangDir, config, pcmDir, target);
             }
-            system(std::format("{} -std={} {}.cppm --precompile -fprebuilt-module-path={} -o {}.pcm {}", clangDir, config.standard, path.generic_string(), pcmDir.generic_string(), (pcmDir/path.filename()).generic_string(), target).c_str());
+
+            std::string flags;
+            for(const std::string& flag : config.flags) {
+                flags+=flag;
+            }
+            
+            system(std::format("{} -std={} {}.cppm --precompile -march={} {} -fprebuilt-module-path={} -o {}.pcm {}", clangDir, config.standard, path.generic_string(), config.march, flags, pcmDir.generic_string(), (pcmDir/path.filename()).generic_string(), target).c_str());
 
             recompiled = true;
             fileMutex.unlock();
-            system(std::format("{} -std={} {}.pcm -fprebuilt-module-path={} -c -O{} -o {}.o {}", clangDir, config.standard, (pcmDir/path.filename()).generic_string(), pcmDir.generic_string(), config.optimizationLevel, (config.buildDir/path.filename()).generic_string(), target).c_str());
+            system(std::format("{} -std={} {}.pcm -fprebuilt-module-path={} -c -O{} -march={} {} -o {}.o {}", clangDir, config.standard, (pcmDir/path.filename()).generic_string(), pcmDir.generic_string(), config.optimizationLevel, config.march, flags, (config.buildDir/path.filename()).generic_string(), target).c_str());
         } else {
             fileMutex.unlock();
         }

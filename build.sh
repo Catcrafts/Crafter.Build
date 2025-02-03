@@ -1,4 +1,3 @@
-clear
 mkdir build
 mkdir bin
 
@@ -21,5 +20,4 @@ clang++ -std=c++26 ./build/Crafter.Build-Dependency.pcm -fprebuilt-module-path=.
 clang++ -std=c++26 ./build/Crafter.Build.pcm -fprebuilt-module-path=./build -c -O3 -o ./build/Crafter.Build.o
 clang++ ./build/main.o ./build/Crafter.Build-ModuleFile_source.o ./build/Crafter.Build-ModuleFile.o ./build/Crafter.Build.o ./build/Crafter.Build-Configuration.o ./build/Crafter.Build-Configuration_source.o ./build/Crafter.Build-Project.o ./build/Crafter.Build-Project_source.o ./build/Crafter.Build-Dependency.o ./build/Crafter.Build-Dependency_source.o -O3 -o ./bin/crafter-build
 
-rm -rf build;
-# crafter-build -c debug
+rm -rf build

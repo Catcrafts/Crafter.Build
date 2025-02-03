@@ -31,13 +31,16 @@ int main(int argc, char* argv[]) {
     fs::path filepath = "project.json";
     std::string configuration;
     std::string outputDir;
+    bool run = false;
     for (std::uint_fast32_t i = 1; i < argc; i++) {
         std::string arg = std::string(argv[i]);
         if(arg == "--help"){
-             std::println("--help\tDisplays this help message.\n-c The name of the configuration to build.\n-p The path to the project file. defualts to project.json\n-o Overrides the output folder.\n");
+             std::println("--help\tDisplays this help message.\n-c The name of the configuration to build.\n-p The path to the project file. defualts to project.json\n-o Overrides the output folder.\n-r Runs the executable after building.");
              return 0;
         } else if(arg == "-c"){
             configuration = argv[++i];
+        } else if(arg == "-r"){
+            run = true;
         } else if(arg == "-o"){
             outputDir = argv[++i];
         } else if(arg == "-p"){
@@ -60,5 +63,14 @@ int main(int argc, char* argv[]) {
         project.Build(configuration);
     } else{
         project.Build(configuration, fs::path(outputDir));
+    }
+
+    if(run){
+        for(const Configuration& config : project.configurations) {
+            if(config.name == configuration){
+                system(std::format("{}", (projectPath/fs::path(config.outputDir)/project.name).generic_string()).c_str());
+                return 0;
+            }
+        }
     }
 }
