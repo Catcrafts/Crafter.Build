@@ -6,10 +6,15 @@ This is a simple and easy to use C++ build system for Linux designed for use wit
 
 ## Prerequisites:
 ```
+lld
 clang 18>
 git
 ```
-## Clone and build:
+## Download Release
+
+Please view the latest x86 version in the [releases](https://github.com/Catcrafts/Crafter.Build/releases)
+
+## Build from source
 ```bash
 git clone https://github.com/Catcrafts/Crafter.Build.git
 cd Crafter.Build
