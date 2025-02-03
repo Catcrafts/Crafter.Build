@@ -84,7 +84,7 @@ Save and close, then run ``crafter-build -c debug``. Now you can run the ``hello
 
 ``output_dir`` The directory where the output files will be placed.
 
-``type`` The type of the project: ``executable``, ``library``, ``shared-library``.
+``type`` The type of the project: ``executable``, ``library``, ``shared-library``, defaults to ``executable``.
 
 ``extends`` An array of configuration names that this configuration extends, later elements in the array take priority over previous ones.
 
