@@ -113,13 +113,20 @@ void Project::Build(Configuration config, fs::path outputDir, fs::path binDir) c
     for(std::int_fast32_t i = 0; i < depThreads.size(); i++) {
         if(config.dependencies[i].path.ends_with(".git")) {
             system(std::format("cd {} && git clone {}", config.buildDir, config.dependencies[i].path).c_str());
+            config.dependencies[i].path = fs::path(config.dependencies[i].path).filename().replace_extension();
+            Project project = Project::LoadFromJSON(fs::path(config.buildDir)/config.dependencies[i].path/"project.json");
+            libs+=std::format(" -l{}", project.name);
+            depThreads[i] = std::thread([i, pcmDir, config, project, binDir]() {
+                project.Build(config.dependencies[i].configuration, pcmDir, binDir);
+            });
+        } else{
+            Project project = Project::LoadFromJSON(config.dependencies[i].path);
+            libs+=std::format(" -l{}", project.name);
+            depThreads[i] = std::thread([i, pcmDir, config, project, binDir]() {
+                project.Build(config.dependencies[i].configuration, pcmDir, binDir);
+            });
         }
-        config.dependencies[i].path = fs::path(config.dependencies[i].path).filename().replace_extension();
-        Project project = Project::LoadFromJSON(fs::path(config.buildDir)/config.dependencies[i].path/"project.json");
-        libs+=std::format(" -l{}", project.name);
-        depThreads[i] = std::thread([i, pcmDir, config, project, binDir]() {
-            project.Build(config.dependencies[i].configuration, pcmDir, binDir);
-        });
+       
     }
 
     std::string name = this->name;
@@ -160,12 +167,17 @@ void Project::Build(Configuration config, fs::path outputDir, fs::path binDir) c
     //     thread.join();
     // }
 
+    std::string march;
+    if(config.target != "wasm32-unknown-wasi"){
+        march = std::format("-march={}", config.march);
+    }
+
     std::vector<std::thread> threads;
     for(std::uint_fast32_t i = 0; i < config.sourceFiles.size(); i++) {
         files+=std::format("{}_source.o ",(config.buildDir/config.sourceFiles[i].filename()).generic_string());
         //if(!fs::exists((config.buildDir/config.sourceFiles[i].filename()).generic_string()+"_source.o") || fs::last_write_time(config.sourceFiles[i].generic_string()+".cpp") > fs::last_write_time((config.buildDir/config.sourceFiles[i].filename()).generic_string()+"_source.o")) {
-            threads.emplace_back([i, &config, pcmDir, target, clangDir, flags](){
-                system(std::format("{} -std={} {}.cpp -fprebuilt-module-path={} -c -O{} -march={} {} -o {}_source.o {}", clangDir, config.standard, config.sourceFiles[i].generic_string(), pcmDir.generic_string(), config.optimizationLevel, config.march, flags, (config.buildDir/config.sourceFiles[i].filename()).generic_string(), target).c_str());
+            threads.emplace_back([i, &config, pcmDir, target, clangDir, flags, march](){
+                system(std::format("{} -std={} {}.cpp -fprebuilt-module-path={} -c -O{} {} {} -o {}_source.o {}", clangDir, config.standard, config.sourceFiles[i].generic_string(), pcmDir.generic_string(), config.optimizationLevel, march, flags, (config.buildDir/config.sourceFiles[i].filename()).generic_string(), target).c_str());
             });
         //}
     }
